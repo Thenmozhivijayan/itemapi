@@ -1,20 +1,20 @@
-# Use Java 21
-FROM eclipse-temurin:21-jdk
-
-# Set working directory
+# -------- BUILD STAGE --------
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copy project files
-COPY . .
-
-# Give execute permission to mvnw
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 RUN chmod +x mvnw
 
-# Build the application
+COPY src src
 RUN ./mvnw clean package -DskipTests
 
-# Expose port
-EXPOSE 8080
+# -------- RUN STAGE --------
+FROM eclipse-temurin:21-jre
+WORKDIR /app
 
-# Run the application
-CMD ["java", "-jar", "target/deltasigmatest-0.0.1-SNAPSHOT.jar"]
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
